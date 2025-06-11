@@ -1,8 +1,8 @@
 const fn = require('../../../common/fn');
 
 exports.getOrder = async (dt) => {
-     if (dt.err) {dt.flow.push('❌ salesModel.js | bypass getOrder');return dt;}
-        dt.flow.push('➡️. salesModel.js | start getOrder');
+     if (dt.err) {dt.flow.push('❌ salesModel.js | bypass getLicense');return dt;}
+        dt.flow.push('➡️. salesModel.js | start getLicense');
 
         let rows=[];
         

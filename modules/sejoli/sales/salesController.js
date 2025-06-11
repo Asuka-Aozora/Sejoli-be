@@ -7,3 +7,8 @@ exports.getOrder = async (req, res) => {
   console.log("dt ", dt);
   res.status(dt.code).json(fn.setResponse(dt));
 };
+exports.updateData = async (req,res) => {
+    let dt = {err:false,msg:'',flow:[],code:200,req_body:req.body,res:res}
+    dt=await m.updateData(dt);
+    res.status(dt.code).json(fn.setResponse(dt));
+};
