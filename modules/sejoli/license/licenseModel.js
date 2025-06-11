@@ -8,10 +8,9 @@ exports.getOrder = async (dt) => {
         
         try {
             [rows] = await fn.db.query(`
-            SELECT o.*, u.display_name, u.user_email, p.post_title AS product_name
+            SELECT o.*, u.display_name
             FROM wp_sejolisa_orders o
             JOIN wp_users u ON o.user_id = u.ID
-            JOIN wp_posts p ON o.product_id = p.ID
         `);
         } catch (error) {
             dt.flow.push('❌ salesModel.js | Error querying database. '+error);
