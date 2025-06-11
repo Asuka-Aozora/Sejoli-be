@@ -15,6 +15,7 @@ router.post("/addData", fn.otorisasi(), sample.addData);
 router.patch("/updateData", fn.otorisasi(), sample.updateData);
 router.delete("/delData", fn.otorisasi(), sample.delData);
 router.get("/get-order", fn.otorisasi(), sales.getOrder);
+router.put("/update-order", fn.otorisasi(), sales.updateOrder);
 
 
 module.exports = router;
