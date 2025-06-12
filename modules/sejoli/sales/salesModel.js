@@ -41,19 +41,23 @@ exports.getOrder = async (dt) => {
 }
 
 exports.updateOrderStatus = async (dt) => {
-  let rows = [];
-  let status = "";
-  let orderId = "";
+  const { ID, status } = dt.req_body;
+
+  if (
+    !ID ||
+    !Array.isArray(ID) ||
+    ID.length === 0 ||
+    !status
+  ) {
+    dt.err = true;
+    dt.code = 400;
+    dt.flow.push("❌ salesModel.js | status & ID are required");
+    return dt;
+  }
 
   try {
-    status = dt.req_body.status;
-    orderId = dt.req_body.ID;
-
-    if (!status || !orderId) {
-      dt.flow.push("❌ salesModel.js | status & ID are required");
-      dt.err = true;
-      return dt;
-    }
+    const placeholders = ID.map(() => "?").join(", ");
+    const values = [status, ...ID];
 
     const allowedStatuses = [
       "on-hold",
@@ -74,24 +78,24 @@ exports.updateOrderStatus = async (dt) => {
       return dt;
     }
 
-    [rows] = await fn.db.query(
-      `UPDATE wp_sejolisa_orders 
-             SET status = ? 
-             WHERE ID = ?`,
-      [status, orderId]
+    await fn.db.query(
+      `UPDATE wp_sejolisa_orders SET status = ? WHERE id IN (${placeholders})`,
+      values
     );
   } catch (error) {
-    dt.flow.push("❌ salesModel.js | Error querying database. " + error);
+    dt.flow.push(
+      "❌ salesModel.js | Error querying database. " + error.toString()
+    );
     dt.err = true;
+    dt.code = 500;
     return dt;
   }
 
   dt.data = {
-    ID: orderId,
-    status: status,
-    rows_affected: rows.affectedRows,
+    ID,
+    status,
   };
-  dt.flow.push("✅ salesModel.js | order status updated");
+  dt.flow.push(`✅ salesModel.js | ${ID.length} order(s) updated`);
   dt.err = false;
 
   return dt;
