@@ -7,7 +7,7 @@ const app = express();
 //const PORT = 1111;
 
 // Middleware
-app.use(cors({ origin: "http://server.local:8082" }));
+app.use(cors({ origin: "http://sejoli.local:8083" }));
 app.use(bodyParser.json());
 
 // Register routes
