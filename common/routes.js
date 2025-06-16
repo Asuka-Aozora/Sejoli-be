@@ -4,6 +4,7 @@ const fn = require("../common/fn");
 const sample = require("../modules/sample/sampleController");
 const sales = require("../modules/sejoli/sales/salesController");
 const account = require("../modules/account/accountController");
+const license = require("../modules/sejoli/license/licenseController");
 
 router.get("/", async (req, res) => {
   res.send("Welcome to Node Api");
@@ -14,8 +15,9 @@ router.get("/users", fn.otorisasi("admin"), sample.getData);
 router.post("/addData", fn.otorisasi(), sample.addData);
 router.patch("/updateData", fn.otorisasi(), sample.updateData);
 router.delete("/delData", fn.otorisasi(), sample.delData);
-router.get("/get-order", fn.otorisasi(), sales.getOrder);
+router.get("/get-orders", fn.otorisasi(), sales.getOrder);
 router.put("/update-order-status", fn.otorisasi(), sales.updateOrderStatus);
+router.get("/get-licenses", fn.otorisasi(), license.getLicense);
 
 
 module.exports = router;
