@@ -19,7 +19,6 @@ router.get("/get-orders", fn.otorisasi(), sales.getOrder);
 router.put("/update-order-status", fn.otorisasi(), sales.updateOrderStatus);
 router.get("/get-licenses", fn.otorisasi(), license.getLicense);
 
-
 module.exports = router;
 
 //  1. jika tidak ada fn.otorisasi => maka public,
