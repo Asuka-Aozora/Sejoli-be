@@ -40,51 +40,26 @@ exports.getOrder = async (dt) => {
         return dt;
 }
 
-exports.updateOrderStatus = async (dt) => {
-  const { ID, status } = dt.req_body;
+exports.postCheckout = async (dt) => {
+  const { product_id, quantity, username, email, phone, payment_gateway, status } = dt.req_body;
 
-  if (
-    !ID ||
-    !Array.isArray(ID) ||
-    ID.length === 0 ||
-    !status
-  ) {
+  if (!status || !product_id || !quantity || !username || !email || !phone || !payment_gateway) {
     dt.err = true;
     dt.code = 400;
-    dt.flow.push("❌ salesModel.js | status & ID are required");
+    dt.flow.push("❌ checkoutModel.js | status, product_id, quantity, username, email, phone, payment_gateway are required");
     return dt;
   }
 
   try {
-    const placeholders = ID.map(() => "?").join(", ");
-    const values = [status, ...ID];
 
-    const allowedStatuses = [
-      "on-hold",
-      "payment-confirm",
-      "in-progress",
-      "shipping",
-      "completed",
-      "refunded",
-      "cancelled",
-      "resend",
-    ];
-
-    // validasi status
-    if (!allowedStatuses.includes(status)) {
-      dt.flow.push(`❌ salesModel.js | Invalid status: ${status}`);
-      dt.err = true;
-      dt.code = 400;
-      return dt;
-    }
-
+    const values = [product_id, quantity, username, email, phone, payment_gateway, status];
     await fn.db.query(
-      `UPDATE wp_sejolisa_orders SET status = ? WHERE id IN (${placeholders})`,
+      `INSERT INTO wp_sejolisa_orders (product_id, quantity, username, email, phone, payment_gateway, status) VALUES (?,?,?,?,?,?,?)`,
       values
     );
   } catch (error) {
     dt.flow.push(
-      "❌ salesModel.js | Error querying database. " + error.toString()
+      "❌ checkoutModel.js | Error querying database. " + error.toString()
     );
     dt.err = true;
     dt.code = 500;
@@ -92,10 +67,15 @@ exports.updateOrderStatus = async (dt) => {
   }
 
   dt.data = {
-    ID,
-    status,
+    product_id,
+    quantity,
+    username,
+    email,
+    phone,
+    payment_gateway,
+    status
   };
-  dt.flow.push(`✅ salesModel.js | ${ID.length} order(s) updated`);
+  dt.flow.push(`✅ checkoutModel.js | ${ID.length} order(s) updated`);
   dt.err = false;
 
   return dt;
