@@ -5,6 +5,7 @@ const sample = require("../modules/sample/sampleController");
 const sales = require("../modules/sejoli/sales/salesController");
 const account = require("../modules/account/accountController");
 const license = require("../modules/sejoli/license/licenseController");
+const subs = require("../modules/sejoli/subscription/subscriptionController");
 
 router.get("/", async (req, res) => {
   res.send("Welcome to Node Api");
@@ -18,6 +19,8 @@ router.delete("/delData", fn.otorisasi(), sample.delData);
 router.get("/get-orders", fn.otorisasi(), sales.getOrder);
 router.put("/update-order-status", fn.otorisasi(), sales.updateOrderStatus);
 router.get("/get-licenses", fn.otorisasi(), license.getLicense);
+router.get("/get-subs", fn.otorisasi(), subs.getSubs);
+router.put("/update-subs", fn.otorisasi(), subs.updateSubsStatus);
 
 
 module.exports = router;
