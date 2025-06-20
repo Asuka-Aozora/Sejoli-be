@@ -17,10 +17,10 @@ router.post("/addData", fn.otorisasi(), sample.addData);
 router.patch("/updateData", fn.otorisasi(), sample.updateData);
 router.delete("/delData", fn.otorisasi(), sample.delData);
 router.get("/get-orders", fn.otorisasi(), sales.getOrder);
-router.put("/update-order-status", fn.otorisasi(), sales.updateOrderStatus);
+router.patch("/update-order-status", fn.otorisasi(), sales.updateOrderStatus);
 router.get("/get-licenses", fn.otorisasi(), license.getLicense);
 router.get("/get-subs", fn.otorisasi(), subs.getSubs);
-router.put("/update-subs", fn.otorisasi(), subs.updateSubsStatus);
+router.patch("/update-subs", fn.otorisasi(), subs.updateSubsStatus);
 
 
 module.exports = router;
