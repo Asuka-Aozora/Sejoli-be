@@ -47,7 +47,10 @@ function setResponse (dt) {
     let msg=dt.flow[dt.flow.length-1].split('|')[1];
     json.message=msg;
     json.code=dt.code;
-    json.status=dt.status;
+    json.status = dt.status;
+    if (typeof dt.total === "number") {
+      json.total = dt.total;
+    }
     if (dt.data) {
         json.data=dt.data;
     }

@@ -21,24 +21,35 @@ exports.getOrder = async (dt) => {
 
   dt.flow.push(`🔍 salesModel.js | limit: ${useLimit}, offset: ${useOffset}`);
 
+  let totalRows = 0;
+  try {
+    const [[{ total }]] = await fn.db.query(
+      `SELECT COUNT(*) AS total
+       FROM wp_sejolisa_orders o
+       JOIN wp_users u ON o.user_id = u.ID
+       JOIN wp_posts p ON o.product_id = p.ID`
+    );
+    totalRows = total;
+  } catch (err) {
+    console.error("❌ salesModel.js | COUNT ERROR:", err);
+    dt.flow.push("❌ salesModel.js | Error counting rows. " + err);
+    dt.err = true;
+    dt.code = 500;
+    return dt;
+  }
+
   // 2) Bangun SQL + params
   let sql = `
     SELECT
-      o.*,
-      u.display_name,
-      u.user_email,
+      o.*, u.display_name, u.user_email,
       p.post_title AS product_name
     FROM wp_sejolisa_orders o
-    JOIN wp_users  u ON o.user_id    = u.ID
-    JOIN wp_posts  p ON o.product_id = p.ID
+    JOIN wp_users u ON o.user_id = u.ID
+    JOIN wp_posts p ON o.product_id = p.ID
+    ORDER BY o.created_at DESC
+    LIMIT ?, ?
   `;
-  const params = [];
-
-  if (useLimit !== null) {
-    // Jika ada limit, untuk pagination
-    sql += ` ORDER BY o.created_at DESC LIMIT ?, ?`;
-    params.push(useOffset, useLimit);
-  }
+  const params = [useOffset, useLimit !== null ? useLimit : totalRows];
 
   // 3) Debug SQL sebelum eksekusi
   console.log("🔍 salesModel.js | final SQL:", sql);
@@ -66,7 +77,8 @@ exports.getOrder = async (dt) => {
 
   // 6) Format hasil
   dt.data = rows;
-  dt.flow.push(`✅ salesModel.js | data orders found (count: ${rows.length})`);
+  dt.total = totalRows;
+  dt.flow.push(`✅ salesModel.js | rows=${rows.length} of ${totalRows}`);
   dt.err = false;
   return dt;
 };
