@@ -12,8 +12,10 @@ exports.getOrder = async (dt) => {
   const parsedLimit = parseInt(rawLimit, 10);
   const parsedOffset = parseInt(rawOffset, 10);
 
-  const useLimit = Number.isInteger(parsedLimit) && parsedLimit > 0 ? parsedLimit : null;
-  const useOffset = Number.isInteger(parsedOffset) && parsedOffset >= 0 ? parsedOffset : 0;
+  const useLimit =
+    Number.isInteger(parsedLimit) && parsedLimit > 0 ? parsedLimit : null;
+  const useOffset =
+    Number.isInteger(parsedOffset) && parsedOffset >= 0 ? parsedOffset : 0;
 
   dt.flow.push(`🔍 salesModel.js | limit: ${useLimit}, offset: ${useOffset}`);
 
@@ -31,8 +33,27 @@ exports.getOrder = async (dt) => {
     values.push(filters.status);
   }
   if (filters.user_id) {
-    where.push("o.user_id = ?");
-    values.push(filters.user_id);
+    if (isNaN(filters.user_id)) {
+      //Username = cari ID dulu
+      const [[user]] = await fn.db.query(
+        "SELECT ID FROM wp_users WHERE display_name = ?",
+        [filters.user_id]
+      );
+      if (user) {
+        where.push("o.user_id = ?");
+        values.push(user.ID);
+      } else {
+        // tidak ditemukan, maka kodongkan data
+        dt.flow.push(" ❌ user_id tidak ditemukan");
+        dt.err = true;
+        dt.code = 404;
+        return dt;
+      }
+    } else {
+      // sudah angka
+      where.push("o.user_id = ?");
+      values.push(filters.user_id);
+    }
   }
   if (filters.affiliate_id) {
     where.push("o.affiliate_id = ?");
@@ -51,7 +72,7 @@ exports.getOrder = async (dt) => {
     values.push(filters["grand_total"]);
   }
   if (filters["date-range"]) {
-    filters["date-range"] = filters["date-range"].replace(/\s*\+\s*/g, " - ")
+    filters["date-range"] = filters["date-range"].replace(/\s*\+\s*/g, " - ");
   }
 
   const whereClause = where.length > 0 ? `WHERE ${where.join(" AND ")}` : "";
@@ -114,7 +135,6 @@ exports.getOrder = async (dt) => {
   dt.err = false;
   return dt;
 };
-
 
 exports.updateOrderStatus = async (dt) => {
   const { ID, status } = dt.req_body;
