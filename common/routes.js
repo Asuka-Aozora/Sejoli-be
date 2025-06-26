@@ -10,7 +10,7 @@ const checkout = require("../modules/sejoli/checkout/checkoutController");
 const coupon = require("../modules/sejoli/checkout/coupon/couponController");
 const payment = require("../modules/sejoli/checkout/payment/paymentController");
 const product = require("../modules/sejoli/checkout/product/productController");
-const validate = require("../modules/sejoli/checkout/checkoutValidate");
+// const validate = require("../modules/sejoli/checkout/checkoutValidate");
 
 
 router.get("/", async (req, res) => {
@@ -38,11 +38,11 @@ router.patch("/update-subs", fn.otorisasi(), subs.updateSubsStatus);
 router.get("/get-ck", fn.otorisasi(), checkout.getCK);
 router.get("/get-cp", fn.otorisasi(), coupon.getCP);
 router.get("/get-payment-methods", fn.otorisasi(), payment.getActiveMethods);
-router.get("/get-product", fn.otorisasi(), product.getProduct);
+router.get("/get-products", fn.otorisasi(), product.getProduct);
 router.post(
   "/checkout",
   fn.otorisasi(),
-  validate.checkoutBody,
+  // validate.checkoutBody,
   checkout.postCheckout
 );
 
