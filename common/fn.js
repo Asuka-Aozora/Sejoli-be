@@ -1,6 +1,8 @@
 require('dotenv').config();
 const mysql = require('mysql2');
 const crypto = require('crypto');
+const bcrypt = require("bcrypt");
+
 
 // Konfigurasi koneksi database (isi dari db.js)
 const pool = mysql.createPool({
@@ -337,7 +339,19 @@ function otorisasi(role) {
     }
 
     next();
-}};
+    }
+};
+
+// Password hashing and verification
+function hashPassword(password) {
+    const saltRounds = 10;            // cost factor, tweak sesuai kebutuhan
+    return bcrypt.hashSync(password, saltRounds);
+  }
+  
+// Verify password against hash
+  function verifyPassword(password, hash) {
+    return bcrypt.compareSync(password, hash);
+  }
 
 // Exports
 module.exports = {
@@ -352,4 +366,6 @@ module.exports = {
     enc,
     dec,
     setResponse,
+    hashPassword,
+    verifyPassword,
 };
