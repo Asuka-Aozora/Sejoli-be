@@ -2,7 +2,7 @@ const m = require('./sampleModel');
 const fn = require('../../common/fn');
 
 exports.getData = async (req,res) => {
-    let dt = {err:false,msg:'',flow:[],code:500}
+    let dt = {err:false,msg:'',flow:[],code:200}
     dt=await m.getData(dt);
     console.log('dt ',dt);
     res.status(dt.code).json(fn.setResponse(dt));

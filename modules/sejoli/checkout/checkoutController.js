@@ -9,7 +9,13 @@ exports.getCK = async (req, res) => {
 };
 
 exports.postCheckout = async (req,res) => {
-    let dt = {err:false,msg:'',flow:[],code:200,req_body:req.body,res:res}
+    let dt = {err:false,msg:'',flow:[],code:200,req_body:req.body,}
     dt = await m.postCheckout(dt);
-    res.status(dt.code).json(fn.setResponse(dt));
+    res.status(dt.code).json({
+      code: dt.code,
+      err: dt.err,
+      msg: dt.msg,
+      flow: dt.flow,
+      req_body: dt.req_body,
+    });;
 };

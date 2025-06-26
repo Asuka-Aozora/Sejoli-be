@@ -1,38 +1,33 @@
 const fn = require("../../../../common/fn");
 
-// salesModel.js
 exports.getProduct = async (dt) => {
-  if (dt.err) {
-    dt.flow.push("❌ salesModel.js | bypass getProducts");
-    return dt;
-  }
-  dt.flow.push("➡️ salesModel.js | start getProducts");
+  if (dt.err) return dt; // jika sudah error, berhenti
+  dt.flow.push("➡️ productModel | mulai query produk");
 
-  let rows;
   try {
-    [rows] = await fn.db.query(`
-      SELECT
-        p.ID,
-        p.post_title   AS product_name
+    const sql = `
+      SELECT 
+        p.ID AS id,
+        p.post_title AS name,
+        pm_price.meta_value AS price
       FROM wp_posts p
-      JOIN wp_posts p ON o.product_id = p.ID
-    `);
+      LEFT JOIN wp_postmeta pm_price 
+        ON pm_price.post_id = p.ID AND pm_price.meta_key = '_price'
+      WHERE p.post_type = 'sejoli-product';
+    `;
+    const [rows] = await fn.db.query(sql);
+    if (!rows.length) {
+      dt.err = true;
+      dt.code = 404;
+      dt.flow.push("❌ productModel | tidak ada produk ditemukan");
+      return dt;
+    }
+    dt.data = rows; // isi data untuk dikirim
+    dt.flow.push(`✅ productModel | ketemu ${rows.length} produk`);
   } catch (error) {
-    dt.flow.push("❌ salesModel.js | Error querying products. " + error);
     dt.err = true;
     dt.code = 500;
-    return dt;
+    dt.flow.push("❌ productModel | error query: " + error.message);
   }
-
-  if (!rows.length) {
-    dt.flow.push("❌ salesModel.js | No products found.");
-    dt.err = true;
-    dt.code = 404;
-    return dt;
-  }
-
-  dt.data = rows; 
-  dt.flow.push(`✅ salesModel.js | Found ${rows.length} products`);
-  dt.err = false;
   return dt;
 };
