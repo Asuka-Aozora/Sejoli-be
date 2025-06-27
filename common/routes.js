@@ -17,6 +17,7 @@ router.get("/", async (req, res) => {
   res.send("Welcome to Node Api");
 });
 
+router.post("/register", account.register);
 router.post("/login", account.login);
 router.get("/users", fn.otorisasi("admin"), sample.getData);
 router.post("/addData", fn.otorisasi(), sample.addData);
@@ -39,6 +40,7 @@ router.get("/get-ck", fn.otorisasi(), checkout.getCK);
 router.get("/get-cp", fn.otorisasi(), coupon.getCP);
 router.get("/get-payment-methods", fn.otorisasi(), payment.getActiveMethods);
 router.get("/get-products", fn.otorisasi(), product.getProduct);
+router.post("/check-user", checkout.checkUser);
 router.post(
   "/checkout",
   fn.otorisasi(),

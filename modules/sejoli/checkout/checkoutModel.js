@@ -1,5 +1,17 @@
 const fn = require("../../../common/fn");
 
+exports.checkUser = async (email) => {
+  const [rows] = await fn.db.query(
+    `SELECT ID, user_login FROM wp_users WHERE user_email = ? LIMIT 1`,
+    [email.trim().toLowerCase()]
+  );
+  if (rows.length) {
+    return { exists: true, user_id: rows[0].ID, username: rows[0].user_login };
+  } else {
+    return { exists: false };
+  }
+};
+
 exports.getCK = async (dt) => {
   if (dt.err) {
     dt.flow.push("❌ salesModel.js | bypass getCK");
@@ -46,37 +58,50 @@ exports.getCK = async (dt) => {
 
 exports.postCheckout = async (dt) => {
   const b = dt.req_body;
-  const conn = await fn.db.getConnection(); // assume pool
+  const conn = await fn.db.getConnection();
   await conn.beginTransaction();
   try {
     // 1. Cek atau Buat User
     let userId;
-    const [u] = await conn.query(
-      `SELECT ID FROM wp_users WHERE user_email = ? LIMIT 1`,
-      [b.user_email]
-    );
-    if (u.length) {
-      dt.flow.push("✅ User exists");
-      userId = u[0].ID;
+    // 1.a. Kalau ada b.user_id (angka), langsung gunakan
+    if (b.user_id) {
+      userId = b.user_id;
+      dt.flow.push("✅ Using existing user ID=" + userId);
     } else {
-      dt.flow.push("➡️ Creating new user");
-      const pwHash = fn.hashPassword(b.password); // misal MD5 atau bcrypt
-      const [r] = await conn.query(
-        `INSERT INTO wp_users
-           (user_login, user_pass, user_email, user_registered, display_name)
-           VALUES (?, ?, ?, NOW(), ?)`,
-        [b.user_id, pwHash, b.user_email, b.user_id]
+      // 1.b. Cek berdasarkan email
+      const [u] = await conn.query(
+        `SELECT ID FROM wp_users WHERE user_email = ? LIMIT 1`,
+        [b.user_email]
       );
-      userId = r.insertId;
-      dt.flow.push(`✅ New user ID=${userId}`);
+      if (u.length) {
+        userId = u[0].ID;
+        dt.flow.push("✅ User found by email ID=" + userId);
+      } else {
+        // 1.c. Buat user baru pakai b.display_name
+        dt.flow.push("➡️ Creating new user");
+        const loginName = b.display_name
+          .trim()
+          .toLowerCase()
+          .replace(/\s+/g, "_");
+        const pwHash = fn.hashPassword(b.password);
 
-      // simpan nomor telepon
-      await conn.query(
-        `INSERT INTO wp_usermeta (user_id, meta_key, meta_value)
-           VALUES (?, '_phone', ?)`,
-        [userId, b.phone]
-      );
-      dt.flow.push("✅ Saved user phone in wp_usermeta");
+        const [r] = await conn.query(
+          `INSERT INTO wp_users
+         (user_login, user_pass, user_email, user_registered, display_name)
+       VALUES (?, ?, ?, NOW(), ?)`,
+          [loginName, pwHash, b.user_email, b.display_name]
+        );
+        userId = r.insertId;
+        dt.flow.push(`✅ New user created ID=${userId}`);
+
+        // simpan nomor telepon
+        await conn.query(
+          `INSERT INTO wp_usermeta (user_id, meta_key, meta_value)
+        VALUES (?, '_phone', ?)`,
+          [userId, b.phone]
+        );
+        dt.flow.push("✅ Saved user phone in wp_usermeta");
+      }
     }
 
     // 2. Insert Order
@@ -91,8 +116,8 @@ exports.postCheckout = async (dt) => {
       [
         b.product_id,
         userId,
-        b.affiliate_id || 0, // affiliate_id (default 0)
-        b.coupon_id || 0, // coupon_id    (default 0)
+        b.affiliate_id || 0,
+        b.coupon_id || 0,
         b.bank,
         b.grand_total,
         b.quantity,
@@ -107,10 +132,9 @@ exports.postCheckout = async (dt) => {
     const txTable = `wp_sejolisa_${safeBank}_transaction`;
 
     // Persiapkan semua kolom NOT NULL
-    const account = b.account || ""; // e.g. VA number, atau ""
-    const uniqueCode = b.unique_code || 0; // generate atau 0
-    const metaData = b.meta_data || {}; // minimal objek kosong
-    
+    const account = b.account || "";
+    const uniqueCode = b.unique_code || 0;
+    const metaData = b.meta_data || {};
 
     await conn.query(
       `INSERT INTO ${txTable}
