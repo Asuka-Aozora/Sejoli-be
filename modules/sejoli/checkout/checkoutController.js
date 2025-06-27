@@ -1,6 +1,45 @@
 const m = require("./checkoutModel");
 const fn = require("../../../common/fn");
 
+exports.checkUser = async (req, res) => {
+  const { email } = req.body;
+  // 1. Validasi
+  if (!email) {
+    return res
+      .status(400)
+      .json({ status: "failed", code: 400, message: "Email is required" });
+  }
+
+  // 2. Inisialisasi dt
+  let dt = {
+    err: false,
+    msg: "",
+    flow: ["➡️ checkUser | start"],
+    code: 200,
+    data: null,
+  };
+
+  try {
+    // 3. Panggil model
+    const exists = await m.checkUser(email);
+    dt.data = exists;
+    // tambahkan flow sesuai hasil
+    dt.flow.push(
+      exists.exists
+        ? `✅ checkUser | user exists ID=${exists.user_id}`
+        : "✅ checkUser | user not exists"
+    );
+    dt.msg = dt.flow[dt.flow.length - 1].split("|")[1].trim();
+    return res.status(200).json(fn.setResponse(dt));
+  } catch (e) {
+    dt.err = true;
+    dt.code = 500;
+    dt.msg = e.message;
+    dt.flow.push(`❌ checkUser | error: ${e.message}`);
+    return res.status(500).json(fn.setResponse(dt));
+  }
+};
+
 exports.getCK = async (req, res) => {
   let dt = { err: false, msg: "", flow: [], code: 200 };
   dt = await m.getCK(dt);

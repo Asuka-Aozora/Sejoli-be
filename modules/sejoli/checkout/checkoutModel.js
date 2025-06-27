@@ -1,5 +1,17 @@
 const fn = require("../../../common/fn");
 
+exports.checkUser = async (email) => {
+  const [rows] = await fn.db.query(
+    `SELECT ID, user_login FROM wp_users WHERE user_email = ? LIMIT 1`,
+    [email.trim().toLowerCase()]
+  );
+  if (rows.length) {
+    return { exists: true, user_id: rows[0].ID, username: rows[0].user_login };
+  } else {
+    return { exists: false };
+  }
+};
+
 exports.getCK = async (dt) => {
   if (dt.err) {
     dt.flow.push("❌ salesModel.js | bypass getCK");
