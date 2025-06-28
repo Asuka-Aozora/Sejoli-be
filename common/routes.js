@@ -40,6 +40,11 @@ router.get("/get-ck", fn.otorisasi(), checkout.getCK);
 router.get("/get-cp", fn.otorisasi(), coupon.getCP);
 router.get("/get-payment-methods", fn.otorisasi(), payment.getActiveMethods);
 router.get("/get-products", fn.otorisasi(), product.getProduct);
+router.get(
+  "/get-product-quantity/:productId",
+  fn.otorisasi(),
+  product.getProductQuantity
+);
 router.post("/check-user", checkout.checkUser);
 router.post(
   "/checkout",
