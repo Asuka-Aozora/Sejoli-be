@@ -9,7 +9,8 @@ exports.getProduct = async (dt) => {
       SELECT 
         p.ID AS id,
         p.post_title AS name,
-        pm_price.meta_value AS price
+        pm_price.meta_value AS price,
+        pm_price._limit_buy_times AS limit_product
       FROM wp_posts p
       LEFT JOIN wp_postmeta pm_price 
         ON pm_price.post_id = p.ID AND pm_price.meta_key = '_price'
