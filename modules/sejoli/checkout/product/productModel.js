@@ -6,15 +6,17 @@ exports.getProduct = async (dt) => {
 
   try {
     const sql = `
-      SELECT 
-        p.ID AS id,
-        p.post_title AS name,
-        pm_price.meta_value AS price,
-        pm_price._limit_buy_times AS limit_product
-      FROM wp_posts p
-      LEFT JOIN wp_postmeta pm_price 
-        ON pm_price.post_id = p.ID AND pm_price.meta_key = '_price'
-      WHERE p.post_type = 'sejoli-product';
+    SELECT
+      p.ID         AS id,
+      p.post_title AS name,
+      MAX(CASE WHEN pm.meta_key = '_price'           THEN pm.meta_value END) AS price,
+      MAX(CASE WHEN pm.meta_key = '_limit_buy_time'  THEN pm.meta_value END) AS limit_buy_time
+    FROM wp_posts p
+    LEFT JOIN wp_postmeta pm
+      ON pm.post_id = p.ID
+      AND pm.meta_key IN ('_price', '_limit_buy_time')
+    WHERE p.post_type = 'sejoli-product'
+    GROUP BY p.ID, p.post_title;
     `;
     const [rows] = await fn.db.query(sql);
     if (!rows.length) {
