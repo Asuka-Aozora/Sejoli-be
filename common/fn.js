@@ -353,6 +353,29 @@ function hashPassword(password) {
     return bcrypt.compareSync(password, hash);
   }
 
+  // Generate unique code
+  async function generateUniqueCode(conn, txTable) {
+    const min = 100000;
+    const max = 999999;
+    let code;
+    let exists = true;
+
+    while (exists) {
+      // 1) Buat angka acak 6 digit
+      code = Math.floor(Math.random() * (max - min + 1)) + min;
+
+      // 2) Cek di database apakah sudah ada
+      const [rows] = await conn.query(
+        `SELECT COUNT(*) AS count FROM ${txTable} WHERE unique_code = ?`,
+        [code]
+      );
+      exists = rows[0].count > 0;
+      // jika exists true, ulangi loop untuk dapat angka baru
+    }
+
+    return code;
+  }
+
 // Exports
 module.exports = {
     db,
@@ -368,4 +391,5 @@ module.exports = {
     setResponse,
     hashPassword,
     verifyPassword,
+    generateUniqueCode,
 };

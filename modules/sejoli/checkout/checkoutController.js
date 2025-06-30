@@ -3,14 +3,13 @@ const fn = require("../../../common/fn");
 
 exports.checkUser = async (req, res) => {
   const { email } = req.body;
-  // 1. Validasi
+  // Validasi simple
   if (!email) {
     return res
       .status(400)
       .json({ status: "failed", code: 400, message: "Email is required" });
   }
 
-  // 2. Inisialisasi dt
   let dt = {
     err: false,
     msg: "",
@@ -20,10 +19,8 @@ exports.checkUser = async (req, res) => {
   };
 
   try {
-    // 3. Panggil model
     const exists = await m.checkUser(email);
     dt.data = exists;
-    // tambahkan flow sesuai hasil
     dt.flow.push(
       exists.exists
         ? `✅ checkUser | user exists ID=${exists.user_id}`
@@ -55,6 +52,6 @@ exports.postCheckout = async (req,res) => {
       err: dt.err,
       msg: dt.msg,
       flow: dt.flow,
-      req_body: dt.req_body,
+      data: dt.req_body,
     });;
 };

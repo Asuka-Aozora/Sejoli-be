@@ -107,13 +107,14 @@ exports.postCheckout = async (dt) => {
     // 2. Insert Order
     const [orderR] = await conn.query(
       `INSERT INTO wp_sejolisa_orders
-          (order_parent_id, product_id, user_id,
+          (ID, order_parent_id, product_id, user_id,
            affiliate_id, coupon_id, 
            payment_gateway, grand_total, quantity, 
            type, status, meta_data, created_at, updated_at)
          VALUES
-          (0, ?, ?, ?, ?, ?, ?, ?, 'subscription-regular', 'pending', ?, NOW(), NOW())`,
+          (?,0, ?, ?, ?, ?, ?, ?, ?, 'subscription-regular', 'pending', ?, NOW(), NOW())`,
       [
+        b.ID || 0, 
         b.product_id,
         userId,
         b.affiliate_id || 0,
@@ -133,7 +134,7 @@ exports.postCheckout = async (dt) => {
 
     // Persiapkan semua kolom NOT NULL
     const account = b.account || "";
-    const uniqueCode = b.unique_code || 0;
+    const uniqueCode = await fn.generateUniqueCode(conn, txTable);
     const metaData = b.meta_data || {};
 
     await conn.query(
