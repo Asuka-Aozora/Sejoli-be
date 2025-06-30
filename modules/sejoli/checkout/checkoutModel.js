@@ -188,7 +188,7 @@ exports.updateQuantity = async (dt) => {
 
     // 1) Ambil stock sekarang
     const [fetchRows] = await tx.query(
-      `SELECT meta_value FROM wp_postmeta WHERE post_id = ? AND meta_key = 'stock'`,
+      `SELECT meta_value FROM wp_postmeta WHERE post_id = ? AND meta_key = '_limit_buy_time  '`,
       [post_id]
     );
 
@@ -216,7 +216,7 @@ exports.updateQuantity = async (dt) => {
       `UPDATE wp_postmeta 
          SET meta_value = ?
        WHERE post_id = ? 
-         AND meta_key = 'stock'`,
+         AND meta_key = '_limit_buy_time'`,
       [newStock, post_id]
     );
 
