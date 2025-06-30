@@ -50,9 +50,9 @@ router.post("/check-user", checkout.checkUser);
 router.post(
   "/checkout",
   fn.otorisasi(),
-  // validate.checkoutBody,
   checkout.postCheckout
 );
+router.patch("/update-quantity", fn.otorisasi(), checkout.updateQuantity);
 
 module.exports = router;
 

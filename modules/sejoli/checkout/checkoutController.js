@@ -3,14 +3,13 @@ const fn = require("../../../common/fn");
 
 exports.checkUser = async (req, res) => {
   const { email } = req.body;
-  // 1. Validasi
+  // Validasi simple
   if (!email) {
     return res
       .status(400)
       .json({ status: "failed", code: 400, message: "Email is required" });
   }
 
-  // 2. Inisialisasi dt
   let dt = {
     err: false,
     msg: "",
@@ -20,10 +19,8 @@ exports.checkUser = async (req, res) => {
   };
 
   try {
-    // 3. Panggil model
     const exists = await m.checkUser(email);
     dt.data = exists;
-    // tambahkan flow sesuai hasil
     dt.flow.push(
       exists.exists
         ? `✅ checkUser | user exists ID=${exists.user_id}`
@@ -47,14 +44,45 @@ exports.getCK = async (req, res) => {
   res.status(dt.code).json(fn.setResponse(dt));
 };
 
-exports.postCheckout = async (req,res) => {
-    let dt = {err:false,msg:'',flow:[],code:200,req_body:req.body,}
-    dt = await m.postCheckout(dt);
-    res.status(dt.code).json({
-      code: dt.code,
-      err: dt.err,
-      msg: dt.msg,
-      flow: dt.flow,
-      req_body: dt.req_body,
-    });;
+exports.postCheckout = async (req, res) => {
+  let dt = { err: false, msg: "", flow: [], code: 200, req_body: req.body };
+  dt = await m.postCheckout(dt);
+  res.status(dt.code).json({
+    code: dt.code,
+    err: dt.err,
+    msg: dt.msg,
+    flow: dt.flow,
+    data: dt.req_body,
+  });
+};
+
+exports.updateQuantity = async (req, res) => {
+  // Inisialisasi DT object sesuai konvensi
+  let dt = {
+    err: false,
+    msg: "",
+    flow: [],
+    code: 200,
+    req_body: req.body,
+  };
+
+  // Panggil model updateQuantity
+  dt = await m.updateQuantity(dt);
+
+  // Jika model menandakan error, ubah HTTP status
+  if (dt.err) {
+    dt.code = 400;
+    dt.msg = dt.flow[dt.flow.length - 1] || "Error updating quantity";
+  } else {
+    dt.msg = "Quantity updated successfully";
+  }
+
+  // Kirim response
+  return res.status(dt.code).json({
+    code: dt.code,
+    err: dt.err,
+    msg: dt.msg,
+    flow: dt.flow,
+    data: dt.data, // data detail perubahan stok
+  });
 };
