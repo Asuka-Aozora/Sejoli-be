@@ -26,7 +26,7 @@ exports.getOrder = async (dt) => {
 
   if (filters.ID) {
     where.push("o.ID = ?");
-    values.push(filters.ID); // FIX: sebelumnya typo "IS"
+    values.push(filters.ID);
   }
   if (filters.status) {
     where.push("o.status = ?");
@@ -50,7 +50,6 @@ exports.getOrder = async (dt) => {
         return dt;
       }
     } else {
-      // sudah angka
       where.push("o.user_id = ?");
       values.push(filters.user_id);
     }
@@ -72,7 +71,9 @@ exports.getOrder = async (dt) => {
     values.push(filters["grand_total"]);
   }
   if (filters["date-range"]) {
-    filters["date-range"] = filters["date-range"].replace(/\s*\+\s*/g, " - ");
+    const [startDate, endDate] = filters["date-range"].split(" - ");
+    where.push("DATE(o.created_at) BETWEEN ? AND ?");
+    values.push(startDate, endDate);
   }
 
   const whereClause = where.length > 0 ? `WHERE ${where.join(" AND ")}` : "";
