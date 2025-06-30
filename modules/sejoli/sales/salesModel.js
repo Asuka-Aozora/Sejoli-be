@@ -1,14 +1,12 @@
 const fn = require("../../../common/fn");
 
 exports.getOrder = async (dt) => {
-  // 0) Bypass jika sudah error
   if (dt.err) {
     dt.flow.push("❌ salesModel.js | bypass getOrder");
     return dt;
   }
   dt.flow.push("➡️ salesModel.js | start getOrder");
 
-  // 1) Ambil & parse limit & offset, dengan fallback
   const rawLimit = dt.req_query?.limit;
   const rawOffset = dt.req_query?.offset;
   const parsedLimit = parseInt(rawLimit, 10);
@@ -21,14 +19,76 @@ exports.getOrder = async (dt) => {
 
   dt.flow.push(`🔍 salesModel.js | limit: ${useLimit}, offset: ${useOffset}`);
 
+  // 1) Filter handling
+  const filters = dt.req_query || {};
+  const where = [];
+  const values = [];
+
+  if (filters.ID) {
+    where.push("o.ID = ?");
+    values.push(filters.ID);
+  }
+  if (filters.status) {
+    where.push("o.status = ?");
+    values.push(filters.status);
+  }
+  if (filters.user_id) {
+    if (isNaN(filters.user_id)) {
+      //Username = cari ID dulu
+      const [[user]] = await fn.db.query(
+        "SELECT ID FROM wp_users WHERE display_name = ?",
+        [filters.user_id]
+      );
+      if (user) {
+        where.push("o.user_id = ?");
+        values.push(user.ID);
+      } else {
+        // tidak ditemukan, maka kodongkan data
+        dt.flow.push(" ❌ user_id tidak ditemukan");
+        dt.err = true;
+        dt.code = 404;
+        return dt;
+      }
+    } else {
+      where.push("o.user_id = ?");
+      values.push(filters.user_id);
+    }
+  }
+  if (filters.affiliate_id) {
+    where.push("o.affiliate_id = ?");
+    values.push(filters.affiliate_id);
+  }
+  if (filters.product_id) {
+    where.push("o.product_id = ?");
+    values.push(filters.product_id);
+  }
+  if (filters.type) {
+    where.push("o.type = ?");
+    values.push(filters.type);
+  }
+  if (filters["grand_total"]) {
+    where.push("o.grand_total = ?");
+    values.push(filters["grand_total"]);
+  }
+  if (filters["date-range"]) {
+    const [startDate, endDate] = filters["date-range"].split(" - ");
+    where.push("DATE(o.created_at) BETWEEN ? AND ?");
+    values.push(startDate, endDate);
+  }
+
+  const whereClause = where.length > 0 ? `WHERE ${where.join(" AND ")}` : "";
+
+  // 2) Total Rows Count
   let totalRows = 0;
   try {
-    const [[{ total }]] = await fn.db.query(
-      `SELECT COUNT(*) AS total
-       FROM wp_sejolisa_orders o
-       JOIN wp_users u ON o.user_id = u.ID
-       JOIN wp_posts p ON o.product_id = p.ID`
-    );
+    const countSQL = `
+      SELECT COUNT(*) AS total
+      FROM wp_sejolisa_orders o
+      JOIN wp_users u ON o.user_id = u.ID
+      JOIN wp_posts p ON o.product_id = p.ID
+      ${whereClause}
+    `;
+    const [[{ total }]] = await fn.db.query(countSQL, values);
     totalRows = total;
   } catch (err) {
     console.error("❌ salesModel.js | COUNT ERROR:", err);
@@ -38,27 +98,23 @@ exports.getOrder = async (dt) => {
     return dt;
   }
 
-  // 2) Bangun SQL + params
-  let sql = `
+  // 3) Final query
+  const sql = `
     SELECT
       o.*, u.display_name, u.user_email,
       p.post_title AS product_name
     FROM wp_sejolisa_orders o
     JOIN wp_users u ON o.user_id = u.ID
     JOIN wp_posts p ON o.product_id = p.ID
+    ${whereClause}
     ORDER BY o.created_at DESC
     LIMIT ?, ?
   `;
-  const params = [useOffset, useLimit !== null ? useLimit : totalRows];
+  values.push(useOffset, useLimit !== null ? useLimit : totalRows);
 
-  // 3) Debug SQL sebelum eksekusi
-  console.log("🔍 salesModel.js | final SQL:", sql);
-  console.log("🔍 salesModel.js | params:", params);
-
-  // 4) Query database
   let rows = [];
   try {
-    [rows] = await fn.db.query(sql, params);
+    [rows] = await fn.db.query(sql, values);
   } catch (error) {
     console.error("❌ salesModel.js | SQL ERROR:", error);
     dt.flow.push("❌ salesModel.js | Error querying database. " + error);
@@ -67,7 +123,6 @@ exports.getOrder = async (dt) => {
     return dt;
   }
 
-  // 5) Guard clause: jika tidak ada data
   if (!rows || rows.length === 0) {
     dt.flow.push("❌ salesModel.js | Tidak ada data ditemukan di DB.");
     dt.err = true;
@@ -75,7 +130,6 @@ exports.getOrder = async (dt) => {
     return dt;
   }
 
-  // 6) Format hasil
   dt.data = rows;
   dt.total = totalRows;
   dt.flow.push(`✅ salesModel.js | rows=${rows.length} of ${totalRows}`);

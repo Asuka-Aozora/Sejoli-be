@@ -35,6 +35,7 @@ router.get("/get-licenses", fn.otorisasi(), license.getLicense);
 router.get("/get-subs", fn.otorisasi(), subs.getSubs);
 router.patch("/update-subs", fn.otorisasi(), subs.updateSubsStatus);
 
+
 // router checkout
 router.get("/get-ck", fn.otorisasi(), checkout.getCK);
 router.get("/get-cp", fn.otorisasi(), coupon.getCP);
