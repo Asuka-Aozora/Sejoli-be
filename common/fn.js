@@ -355,8 +355,8 @@ function hashPassword(password) {
 
   // Generate unique code
   async function generateUniqueCode(conn, txTable) {
-    const min = 100000;
-    const max = 999999;
+    const min = 1;
+    const max = 99;
     let code;
     let exists = true;
 
