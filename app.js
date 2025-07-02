@@ -7,7 +7,7 @@ const PORT = process.env.PORT || 3000;
 //const PORT = 1111;
 
 // Middleware
-app.use(cors({ origin: "http://sejoli.local:8083/" }));
+app.use(cors({ origin: "http://sejoli.local:8083" }));
 app.use(bodyParser.json());
 
 // Register routes
