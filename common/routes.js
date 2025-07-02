@@ -54,6 +54,8 @@ router.post(
   checkout.postCheckout
 );
 router.patch("/update-quantity", fn.otorisasi(), checkout.updateQuantity);
+router.get("/get-product/:slug", fn.otorisasi(), product.getProductBySlug);
+
 
 module.exports = router;
 
