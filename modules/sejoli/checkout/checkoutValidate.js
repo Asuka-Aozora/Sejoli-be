@@ -105,7 +105,6 @@ exports.checkoutBody = (req, res, next) => {
       });
     }
   }
-
   // 3) Jika ada error, kirim response
   if (errors.length) {
     return res.status(400).json({

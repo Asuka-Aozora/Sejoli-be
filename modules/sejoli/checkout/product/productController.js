@@ -18,3 +18,11 @@ exports.getProductQuantity = async (req, res) => {
   console.log("flow:", dt.flow);
   res.status(dt.code).json(fn.setResponse(dt));
 };
+
+exports.getProductBySlug = async (req, res) => {
+  const slug = req.params.slug;
+  const dt = { err: false, msg: "", flow: [], code: 200, slug };
+
+  const result = await m.getProductBySlug(dt);
+  res.status(result.code).json(fn.setResponse(result));
+};

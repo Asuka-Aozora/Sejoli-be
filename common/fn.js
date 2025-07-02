@@ -46,7 +46,7 @@ function setResponse (dt) {
         dt.code=500;
         dt.status="failed";
     }
-    let msg=dt.flow[dt.flow.length-1].split('|')[1];
+    let msg=dt.flow[dt.flow.length-1];
     json.message=msg;
     json.code=dt.code;
     json.status = dt.status;
