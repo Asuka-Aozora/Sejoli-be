@@ -66,3 +66,35 @@ exports.getProductQuantity = async (dt, productId) => {
   }
   return dt;
 };
+
+exports.getProductBySlug = async (dt) => {
+  try {
+    const [rows] = await fn.db.query(
+      `
+      SELECT
+        p.ID as id,
+        p.post_title as name,
+        pm.meta_value as price
+      FROM wp_posts p
+      JOIN wp_postmeta pm ON pm.post_id = p.ID AND pm.meta_key = '_price'
+      WHERE p.post_name = ?
+      `,
+      [dt.slug]
+    );
+
+    if (!rows.length) {
+      dt.err = true;
+      dt.code = 404;
+      dt.msg = "Produk tidak ditemukan untuk slug: " + dt.slug;
+      return dt;
+    }
+
+    dt.data = rows;
+    return dt;
+  } catch (err) {
+    dt.err = true;
+    dt.code = 500;
+    dt.msg = "DB Error: " + err.message;
+    return dt;
+  }
+};

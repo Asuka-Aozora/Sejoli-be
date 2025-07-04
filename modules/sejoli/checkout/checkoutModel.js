@@ -107,13 +107,14 @@ exports.postCheckout = async (dt) => {
     // 2. Insert Order
     const [orderR] = await conn.query(
       `INSERT INTO wp_sejolisa_orders
-          (order_parent_id, product_id, user_id,
+          (ID, order_parent_id, product_id, user_id,
            affiliate_id, coupon_id, 
            payment_gateway, grand_total, quantity, 
            type, status, meta_data, created_at, updated_at)
          VALUES
-          (0, ?, ?, ?, ?, ?, ?, ?, 'subscription-regular', 'pending', ?, NOW(), NOW())`,
+          (?,0, ?, ?, ?, ?, ?, ?, ?, 'subscription-regular', 'pending', ?, NOW(), NOW())`,
       [
+        b.ID || 0, 
         b.product_id,
         userId,
         b.affiliate_id || 0,
@@ -133,7 +134,7 @@ exports.postCheckout = async (dt) => {
 
     // Persiapkan semua kolom NOT NULL
     const account = b.account || "";
-    const uniqueCode = b.unique_code || 0;
+    const uniqueCode = await fn.generateUniqueCode(conn, txTable);
     const metaData = b.meta_data || {};
 
     await conn.query(
@@ -166,5 +167,77 @@ exports.postCheckout = async (dt) => {
     return dt;
   } finally {
     conn.release();
+  }
+};
+exports.updateQuantity = async (dt) => {
+  let rows;
+  let currentStock;
+  const tx = fn.db; // asumsi ini mysql2 promise
+
+  try {
+    const { post_id, quantity } = dt.req_body;
+
+    // Validasi input
+    if (!post_id || typeof quantity !== "number" || quantity < 1) {
+      dt.flow.push(
+        "❌ sampleModel.js | post_id and quantity required and quantity must be > 0"
+      );
+      dt.err = true;
+      return dt;
+    }
+
+    // 1) Ambil stock sekarang
+    const [fetchRows] = await tx.query(
+      `SELECT meta_value FROM wp_postmeta WHERE post_id = ? AND meta_key = '_limit_buy_time  '`,
+      [post_id]
+    );
+
+    if (fetchRows.length === 0) {
+      dt.flow.push(
+        `❌ sampleModel.js | stock meta not found for post_id ${post_id}`
+      );
+      dt.err = true;
+      return dt;
+    }
+
+    currentStock = parseInt(fetchRows[0].meta_value, 10);
+    dt.flow.push(
+      `ℹ️ sampleModel.js | currentStock for post_id ${post_id} = ${currentStock}`
+    );
+
+    // 2) Hitung sisa stock
+    const newStock = Math.max(currentStock - quantity, 0);
+    dt.flow.push(
+      `ℹ️ sampleModel.js | reducing stock by ${quantity}, newStock = ${newStock}`
+    );
+
+    // 3) Update ke database
+    const [updateResult] = await tx.query(
+      `UPDATE wp_postmeta 
+         SET meta_value = ?
+       WHERE post_id = ? 
+         AND meta_key = '_limit_buy_time'`,
+      [newStock, post_id]
+    );
+
+    rows = updateResult;
+    dt.flow.push(
+      `✅ sampleModel.js | stock updated, affectedRows = ${updateResult.affectedRows}`
+    );
+
+    // 4) Simpan hasil ke dt.data
+    dt.data = {
+      post_id,
+      previousStock: currentStock,
+      quantityReduced: quantity,
+      remainingStock: newStock,
+      rows,
+    };
+    dt.err = false;
+    return dt;
+  } catch (error) {
+    dt.flow.push("❌ sampleModel.js | Error updating stock: " + error.message);
+    dt.err = true;
+    return dt;
   }
 };
