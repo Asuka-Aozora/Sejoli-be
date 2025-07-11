@@ -11,7 +11,7 @@ const coupon = require("../modules/sejoli/checkout/coupon/couponController");
 const payment = require("../modules/sejoli/checkout/payment/paymentController");
 const product = require("../modules/sejoli/checkout/product/productController");
 const validate = require("../modules/sejoli/checkout/checkoutValidate");
-
+const couponMenu = require("../modules/sejoli/coupon/couponController");
 
 
 router.get("/", async (req, res) => {
@@ -56,6 +56,9 @@ router.post(
 );
 router.patch("/update-quantity", fn.otorisasi(), checkout.updateQuantity);
 router.get("/get-product/:slug", fn.otorisasi(), product.getProductBySlug);
+
+// router coupon
+router.get("/get-coupons", fn.otorisasi(), couponMenu.getCoupons);
 
 
 module.exports = router;
