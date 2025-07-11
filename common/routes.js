@@ -13,6 +13,7 @@ const product = require("../modules/sejoli/checkout/product/productController");
 const validate = require("../modules/sejoli/checkout/checkoutValidate");
 
 
+
 router.get("/", async (req, res) => {
   res.send("Welcome to Node Api");
 });

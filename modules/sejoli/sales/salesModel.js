@@ -75,6 +75,10 @@ exports.getOrder = async (dt) => {
     where.push("DATE(o.created_at) BETWEEN ? AND ?");
     values.push(startDate, endDate);
   }
+  if (filters.order_parent_id) {
+    where.push("o.order_parent_id = ?");
+    values.push(filters.order_parent_id);
+  }
 
   const whereClause = where.length > 0 ? `WHERE ${where.join(" AND ")}` : "";
 
