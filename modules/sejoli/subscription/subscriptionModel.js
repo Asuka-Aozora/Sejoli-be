@@ -5,8 +5,8 @@ exports.getSubs = async (dt) => {
     dt.flow.push("❌ subscriptionModel.js | bypass getSubs");
     return dt;
   }
-  dt.flow.push("➡️. subscriptionModel.js | start getSubs");
 
+  dt.flow.push("➡️ subscriptionModel.js | start getSubs")
   const rawLimit = dt.req_query?.limit;
   const rawOffset = dt.req_query?.offset;
   const parsedLimit = parseInt(rawLimit, 10);
@@ -30,11 +30,14 @@ exports.getSubs = async (dt) => {
   }
   if (filters.status) {
     where.push("o.status = ?");
+
     values.push(filters.status);
   }
   if (filters.user_id) {
     if (isNaN(filters.user_id)) {
-      //Username = cari ID dulu
+
+      // cari ID user berdasarkan display_name
+      
       const [[user]] = await fn.db.query(
         "SELECT ID FROM wp_users WHERE display_name = ?",
         [filters.user_id]
@@ -45,6 +48,7 @@ exports.getSubs = async (dt) => {
       } else {
         // tidak ditemukan, maka kodongkan data
         dt.flow.push(" ❌ user_id tidak ditemukan");
+
         dt.err = true;
         dt.code = 404;
         return dt;
@@ -65,6 +69,7 @@ exports.getSubs = async (dt) => {
 
   const whereClause = where.length > 0 ? `WHERE ${where.join(" AND ")}` : "";
 
+
   let totalRows = 0;
   try {
     const countSQL = `
@@ -84,6 +89,7 @@ exports.getSubs = async (dt) => {
     return dt;
   }
 
+  // 4) query data aktual
   const sql = `
     SELECT o.*, u.display_name, u.user_email, p.post_title AS product_name
     FROM wp_sejolisa_subscriptions o
@@ -97,12 +103,15 @@ exports.getSubs = async (dt) => {
   let rows = [];
   try {
     [rows] = await fn.db.query(sql, values);
-  } catch (error) {
-    dt.flow.push("❌ subscriptionModel.js | Error querying database. " + error);
+
+  } catch (err) {
+    console.error("❌ subscriptionModel.js | SQL ERROR:", err);
+    dt.flow.push("❌ subscriptionModel.js | Error querying database. " + err);
     dt.err = true;
     dt.code = 500;
     return dt;
   }
+
 
   if (!rows || rows.length === 0) {
     dt.flow.push("❌ subscriptionModel.js | Tidak ada data ditemukan di DB.");
@@ -111,6 +120,8 @@ exports.getSubs = async (dt) => {
     return dt;
   }
 
+
+  // 5) assign hasil
   dt.data = rows;
   dt.total = totalRows;
   dt.flow.push("✅ subscriptionModel.js | Ditemukan " + totalRows + " data.");
